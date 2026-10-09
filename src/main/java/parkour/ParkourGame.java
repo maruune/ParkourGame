@@ -453,6 +453,20 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         spriteGraphics.dispose();
     }
 
+    private void drawRotatedSprite(Graphics2D graphics, BufferedImage sprite, int centerX, int centerY,
+            int width, int height, double rotation) {
+        Graphics2D rotatedGraphics = (Graphics2D) graphics.create();
+        rotatedGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        double scale = Math.min(width / (double) sprite.getWidth(), height / (double) sprite.getHeight());
+        int drawWidth = (int) Math.round(sprite.getWidth() * scale);
+        int drawHeight = (int) Math.round(sprite.getHeight() * scale);
+        rotatedGraphics.translate(centerX, centerY);
+        rotatedGraphics.rotate(rotation);
+        rotatedGraphics.drawImage(sprite, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight, null);
+        rotatedGraphics.dispose();
+    }
+
     private void drawJettWindTrail(Graphics2D graphics) {
         if (WIND_SPRITE == null) return;
         Composite previousComposite = graphics.getComposite();
@@ -462,7 +476,7 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
             graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             int trailX = playerX - facingDirection * (playerWidth + 8 + i * 20);
             int trailY = playerY + playerHeight / 3 + (i % 2 == 0 ? -5 : 5);
-            drawSprite(graphics, WIND_SPRITE, trailX, trailY, 42, 34, facingDirection, 0);
+            drawSprite(graphics, WIND_SPRITE, trailX, trailY, 42, 34, -facingDirection, 0);
         }
         graphics.setComposite(previousComposite);
     }
@@ -472,8 +486,8 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         Composite previousComposite = graphics.getComposite();
         float alpha = marioJumpWindTimer / (float) MARIO_JUMP_WIND_DURATION;
         graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        drawSprite(graphics, WIND_SPRITE, playerX - 12, playerY + playerHeight - 8,
-                playerWidth + 24, 28, facingDirection, 0);
+        drawRotatedSprite(graphics, WIND_SPRITE, playerX + playerWidth / 2,
+            playerY + playerHeight + 24, 48, 28, Math.PI / 2);
         graphics.setComposite(previousComposite);
     }
 
