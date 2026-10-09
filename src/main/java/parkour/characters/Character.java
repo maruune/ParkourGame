@@ -34,4 +34,5 @@ public abstract class Character {
     public boolean canDash() { return dash; }
     public boolean canUseGhostMode() { return ghostMode; }
     public BufferedImage getSprite(boolean jumping) { return null; }
+    public BufferedImage getDashSprite() { return null; }
 }

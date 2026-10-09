@@ -2,6 +2,7 @@ package parkour;
 
 import parkour.characters.Character;
 import parkour.characters.CharacterFactory;
+import parkour.characters.SpriteLoader;
 import parkour.levels.Level;
 import parkour.levels.LevelFactory;
 import javax.swing.*;
@@ -24,7 +25,10 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
     // Skill Constants
     private static final int DASH_SPEED = 15;
     private static final int DASH_DURATION = 10;
+    private static final int DASH_COOLDOWN_DURATION = 15 * FPS;
     private static final int GHOST_DURATION = 120; 
+    private static final int MARIO_JUMP_WIND_DURATION = 18;
+    private static final BufferedImage WIND_SPRITE = SpriteLoader.load("wind.png");
 
     // --- GAME STATES ---
     private enum GameState { CHAR_SELECT, MAP_SELECT, PLAYING, GAME_OVER, WIN }
@@ -32,7 +36,7 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
 
     // --- PLAYER VARIABLES ---
     private int playerX = 50, playerY = 400;
-    private int playerWidth = 30, playerHeight = 50;
+    private int playerWidth = 42, playerHeight = 70;
     private int velY = 0;
     private int velX = 0;
     private int facingDirection = 1;
@@ -49,9 +53,11 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
     private boolean isDashing = false;    
     private int dashTimer = 0;            
     private boolean canDash = true;       
+    private int dashCooldownTimer = 0;
     private boolean isGhostMode = false;  
     private int ghostTimer = 0;           
     private boolean canGhost = true;      
+    private int marioJumpWindTimer = 0;
 
     // --- MAP DATA ---
     private List<Rectangle> platforms = new ArrayList<Rectangle>();
@@ -230,7 +236,12 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
 
     private void updateCooldowns() {
         if (isDashing) { dashTimer--; if (dashTimer <= 0) isDashing = false; }
+        if (!canDash && dashCooldownTimer > 0) {
+            dashCooldownTimer--;
+            if (dashCooldownTimer == 0) canDash = true;
+        }
         if (isGhostMode) { ghostTimer--; if (ghostTimer <= 0) isGhostMode = false; }
+        if (marioJumpWindTimer > 0) marioJumpWindTimer--;
     }
 
     private void updateCamera() {
@@ -244,7 +255,7 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
     }
 
     private void resetJumpAbilities() {
-        canDoubleJump = true; canDash = true; canGhost = true;
+        canDoubleJump = true; canGhost = true;
     }
 
     private void checkWinCondition() {
@@ -299,11 +310,24 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
             if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) { velX = -speed; facingDirection = -1; }
             if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) { velX = speed; facingDirection = 1; }
             if (key == KeyEvent.VK_SPACE || key == KeyEvent.VK_W || key == KeyEvent.VK_UP) {
-                if (velY == 0) velY = JUMP_STRENGTH;
-                else if (selectedCharacter.canDoubleJump() && canDoubleJump) { velY = JUMP_STRENGTH; canDoubleJump = false; }
+                if (velY == 0) {
+                    velY = JUMP_STRENGTH;
+                    if (selectedCharacter.getId() == 1) marioJumpWindTimer = MARIO_JUMP_WIND_DURATION;
+                }
+                else if (selectedCharacter.canDoubleJump() && canDoubleJump) {
+                    velY = JUMP_STRENGTH;
+                    canDoubleJump = false;
+                    if (selectedCharacter.getId() == 1) marioJumpWindTimer = MARIO_JUMP_WIND_DURATION;
+                }
             }
             if (key == KeyEvent.VK_SHIFT) {
-                if (selectedCharacter.canDash() && canDash && !isDashing) { isDashing = true; canDash = false; dashTimer = DASH_DURATION; if (velX == 0) velX = facingDirection * DASH_SPEED; }
+                if (selectedCharacter.canDash() && canDash && !isDashing) {
+                    isDashing = true;
+                    canDash = false;
+                    dashTimer = DASH_DURATION;
+                    dashCooldownTimer = DASH_COOLDOWN_DURATION;
+                    if (velX == 0) velX = facingDirection * DASH_SPEED;
+                }
                 if (selectedCharacter.canUseGhostMode() && canGhost && !isGhostMode) { isGhostMode = true; canGhost = false; ghostTimer = GHOST_DURATION; }
             }
         }
@@ -429,6 +453,30 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         spriteGraphics.dispose();
     }
 
+    private void drawJettWindTrail(Graphics2D graphics) {
+        if (WIND_SPRITE == null) return;
+        Composite previousComposite = graphics.getComposite();
+        float dashProgress = dashTimer / (float) DASH_DURATION;
+        for (int i = 0; i < 3; i++) {
+            float alpha = Math.max(0.12f, dashProgress * (0.62f - i * 0.16f));
+            graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            int trailX = playerX - facingDirection * (playerWidth + 8 + i * 20);
+            int trailY = playerY + playerHeight / 3 + (i % 2 == 0 ? -5 : 5);
+            drawSprite(graphics, WIND_SPRITE, trailX, trailY, 42, 34, facingDirection, 0);
+        }
+        graphics.setComposite(previousComposite);
+    }
+
+    private void drawMarioJumpWind(Graphics2D graphics) {
+        if (WIND_SPRITE == null || marioJumpWindTimer <= 0) return;
+        Composite previousComposite = graphics.getComposite();
+        float alpha = marioJumpWindTimer / (float) MARIO_JUMP_WIND_DURATION;
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        drawSprite(graphics, WIND_SPRITE, playerX - 12, playerY + playerHeight - 8,
+                playerWidth + 24, 28, facingDirection, 0);
+        graphics.setComposite(previousComposite);
+    }
+
     private void drawMapSelect(Graphics2D g) {
         g.setColor(Color.WHITE); g.setFont(new Font("Arial", Font.BOLD, 40)); centerText(g, "SELECT A LEVEL", 80);
         String[] labels = {"1. Warm Up", "2. Islands", "3. Lava", "4. Hard I", "5. Tunnel", "6. Marathon", "7. Precision", "8. The Wall", "9. Kaizo", "10. Gauntlet", "11. Cup Rain"};
@@ -446,7 +494,10 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         g2d.translate(-camX, -camY);
 
         if(isGhostMode) { g2d.setColor(new Color(200, 100, 255, 100)); g2d.fillOval(playerX-5, playerY-5, playerWidth+10, playerHeight+10); }
-        BufferedImage sprite = selectedCharacter.getSprite(velY != 0);
+        if (isDashing && selectedCharacter.getId() == 2) drawJettWindTrail(g2d);
+        if (selectedCharacter.getId() == 1) drawMarioJumpWind(g2d);
+        BufferedImage sprite = isDashing ? selectedCharacter.getDashSprite() : null;
+        if (sprite == null) sprite = selectedCharacter.getSprite(velY != 0);
         if (sprite != null) {
             int bounce = velX != 0 && velY == 0 && runAnimationFrame ? 2 : 0;
             drawSprite(g2d, sprite, playerX, playerY,
@@ -484,7 +535,11 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         g2d.setColor(new Color(50, 50, 50)); g2d.fill(changeCharBtn); g2d.setColor(Color.WHITE); g2d.draw(changeCharBtn);
         g2d.setFont(new Font("Arial", Font.BOLD, 12)); g2d.drawString("CLICK TO CHANGE CHARACTER", changeCharBtn.x + 10, changeCharBtn.y + 20);
         g2d.drawString("Map: " + mapName, 20, 30);
-        if(selectedCharacter.canDash()) { g2d.setColor(canDash ? Color.GREEN : Color.RED); g2d.drawString("Dash: " + (canDash ? "READY" : "USED"), 20, 50); }
+        if(selectedCharacter.canDash()) {
+            g2d.setColor(canDash ? Color.GREEN : Color.RED);
+            int cooldownSeconds = (dashCooldownTimer + FPS - 1) / FPS;
+            g2d.drawString("Dash: " + (canDash ? "READY" : cooldownSeconds + "s"), 20, 50);
+        }
         else if(selectedCharacter.canUseGhostMode()) { g2d.setColor(canGhost ? Color.GREEN : (isGhostMode ? Color.MAGENTA : Color.RED)); g2d.drawString("Phase: " + (canGhost ? "READY" : (isGhostMode ? "ACTIVE" : "USED")), 20, 50); }
     }
 
@@ -512,6 +567,7 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         playerX = 50; playerY = 400; camX = 0; camY = 0;
         velX = 0; velY = 0;
         resetJumpAbilities(); isGhostMode = false; isDashing = false;
+        canDash = true; dashCooldownTimer = 0; marioJumpWindTimer = 0;
         currentMapId = mapId; deathMessage = "YOU DIED"; 
         currentLevel = LevelFactory.create(mapId);
         platforms = currentLevel.getPlatforms();

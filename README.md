@@ -30,7 +30,7 @@ java -cp build parkour.Main
 
 - Move: `A` / `D` or arrow keys
 - Jump: `W`, `Up`, or `Space`
-- Character ability: `Shift`
+- Character ability: `Shift` (Jett's dash cooldown is 15 seconds)
 - Select characters and levels and use the on-screen buttons with the mouse
 
 ## Project layout
