@@ -1,5 +1,6 @@
 @echo off
 setlocal
+cd /d "%~dp0"
 
 set "JAVAC=javac"
 where javac >nul 2>nul
@@ -15,4 +16,5 @@ if not defined JAVAC (
 if not exist build mkdir build
 "%JAVAC%" -source 8 -target 8 -sourcepath src\main\java -d build src\main\java\parkour\Main.java
 if errorlevel 1 exit /b 1
+if exist src\main\resources xcopy /E /I /Y src\main\resources build\ >nul
 java -cp build parkour.Main

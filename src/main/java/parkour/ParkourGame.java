@@ -2,11 +2,13 @@ package parkour;
 
 import parkour.characters.Character;
 import parkour.characters.CharacterFactory;
+import parkour.characters.runner.Runner;
 import parkour.levels.Level;
 import parkour.levels.LevelFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -72,6 +74,8 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
     // --- SYSTEM ---
     private Thread gameThread; 
     private Random visualRandom = new Random(); 
+    private int runAnimationTick = 0;
+    private boolean runAnimationFrame = false;
 
     public ParkourGame() {
         this.setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
@@ -117,6 +121,7 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
     }
 
     private void update() {
+        updateRunAnimation();
         if (currentState == GameState.PLAYING) {
             updatePhysics();
             updateRain(); 
@@ -124,6 +129,19 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
             checkWinCondition();
             checkDeath();
             updateCooldowns();
+        }
+    }
+
+    private void updateRunAnimation() {
+        if (currentState == GameState.PLAYING && velX != 0 && velY == 0) {
+            runAnimationTick++;
+            if (runAnimationTick >= 8) {
+                runAnimationFrame = !runAnimationFrame;
+                runAnimationTick = 0;
+            }
+        } else {
+            runAnimationTick = 0;
+            runAnimationFrame = false;
         }
     }
 
@@ -309,10 +327,25 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
             Rectangle btn = charButtons[i];
             Character character = CharacterFactory.create(i + 1);
             g.setColor(new Color(30, 30, 30)); g.fill(btn); g.setColor(Color.WHITE); g.setStroke(new BasicStroke(2)); g.draw(btn);
-            g.setColor(character.getColor()); g.fillRect(btn.x + 60, btn.y + 30, 30, 50);
+            if (character instanceof Runner && ((Runner) character).getSprite() != null) {
+                drawSprite(g, ((Runner) character).getSprite(), btn.x + 50, btn.y + 20, 50, 85, 1, 0);
+            } else {
+                g.setColor(character.getColor()); g.fillRect(btn.x + 60, btn.y + 30, 30, 50);
+            }
             g.setColor(Color.WHITE); g.setFont(new Font("Arial", Font.BOLD, 18));
             g.drawString(character.getName(), btn.x + 30, btn.y + 110);
         }
+    }
+
+    private void drawSprite(Graphics2D graphics, BufferedImage sprite, int x, int y,
+            int width, int height, int direction, int verticalOffset) {
+        Graphics2D spriteGraphics = (Graphics2D) graphics.create();
+        spriteGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        spriteGraphics.translate(x + (direction < 0 ? width : 0), y + verticalOffset);
+        if (direction < 0) spriteGraphics.scale(-1, 1);
+        spriteGraphics.drawImage(sprite, 0, 0, width, height, null);
+        spriteGraphics.dispose();
     }
 
     private void drawMapSelect(Graphics2D g) {
@@ -332,7 +365,14 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         g2d.translate(-camX, -camY);
 
         if(isGhostMode) { g2d.setColor(new Color(200, 100, 255, 100)); g2d.fillOval(playerX-5, playerY-5, playerWidth+10, playerHeight+10); }
-        g2d.setColor(selectedCharacter.getColor()); g2d.fillRect(playerX, playerY, playerWidth, playerHeight);
+        if (selectedCharacter instanceof Runner && ((Runner) selectedCharacter).getSprite() != null) {
+            int bounce = velX != 0 && velY == 0 && runAnimationFrame ? 2 : 0;
+            drawSprite(g2d, ((Runner) selectedCharacter).getSprite(), playerX, playerY,
+                    playerWidth, playerHeight, facingDirection, -bounce);
+        } else {
+            g2d.setColor(selectedCharacter.getColor());
+            g2d.fillRect(playerX, playerY, playerWidth, playerHeight);
+        }
 
         g2d.setColor(Color.LIGHT_GRAY);
         for (Rectangle rect : platforms) {

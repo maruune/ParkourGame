@@ -34,22 +34,24 @@ java -cp build parkour.Main
 ## Project layout
 
 ```text
-src/main/java/parkour/
-  Main.java
-  ParkourGame.java
-  characters/
-    Character.java
-    CharacterFactory.java
-    runner/Runner.java
-    ninja/Ninja.java
-    flash/Flash.java
-    ghost/Ghost.java
-  levels/
-    Level.java
-    LevelFactory.java
-    level01/Level01.java
-    ...
-    level11/Level11.java
+src/main/
+  java/parkour/
+    Main.java
+    ParkourGame.java
+    characters/
+      Character.java
+      CharacterFactory.java
+      runner/Runner.java
+      ninja/Ninja.java
+      flash/Flash.java
+      ghost/Ghost.java
+    levels/
+      Level.java
+      LevelFactory.java
+      level01/Level01.java
+      ...
+      level11/Level11.java
+  resources/parkour/characters/runner/Mario.png
 ```
 
 Each character and level has its own class and folder. Shared character attributes and procedural level generation live in their respective base classes.
