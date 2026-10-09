@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseListener {
+public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
 
     // --- GAME CONSTANTS ---
     private static final int WINDOW_WIDTH = 800;
@@ -66,6 +66,8 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
 
     // --- UI BUTTONS ---
     private Rectangle[] charButtons = new Rectangle[4];
+    private double[] characterCardScale = new double[4];
+    private int hoveredCharacter = -1;
     private Rectangle[] mapButtons = new Rectangle[11];
     private Rectangle changeCharBtn = new Rectangle(580, 10, 200, 30);
     private Rectangle retryBtn = new Rectangle(250, 300, 300, 50);
@@ -83,9 +85,13 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         this.setFocusable(true);
         this.addKeyListener(this);
         this.addMouseListener(this);
+        this.addMouseMotionListener(this);
 
         // Define UI Positions
-        for(int i = 0; i < 4; i++) charButtons[i] = new Rectangle(50 + (i * 180), 200, 150, 200);
+        for(int i = 0; i < 4; i++) {
+            charButtons[i] = new Rectangle(50 + (i * 180), 150, 150, 300);
+            characterCardScale[i] = 1.0;
+        }
         int x = 50, y = 150;
         for(int i = 0; i < 11; i++) {
             mapButtons[i] = new Rectangle(x, y, 150, 80);
@@ -122,6 +128,7 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
 
     private void update() {
         updateRunAnimation();
+        updateCharacterCardScale();
         if (currentState == GameState.PLAYING) {
             updatePhysics();
             updateRain(); 
@@ -129,6 +136,14 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
             checkWinCondition();
             checkDeath();
             updateCooldowns();
+        }
+    }
+
+    private void updateCharacterCardScale() {
+        for (int i = 0; i < characterCardScale.length; i++) {
+            double target = currentState == GameState.CHAR_SELECT && i == hoveredCharacter ? 1.08 : 1.0;
+            characterCardScale[i] += (target - characterCardScale[i]) * 0.18;
+            if (Math.abs(target - characterCardScale[i]) < 0.001) characterCardScale[i] = target;
         }
     }
 
@@ -304,8 +319,26 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
     @Override public void mouseClicked(MouseEvent e) {}
     @Override public void mouseReleased(MouseEvent e) {}
     @Override public void mouseEntered(MouseEvent e) {}
-    @Override public void mouseExited(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) { updateHoveredCharacter(e.getPoint()); }
+    @Override public void mouseDragged(MouseEvent e) { updateHoveredCharacter(e.getPoint()); }
+    @Override public void mouseMoved(MouseEvent e) { updateHoveredCharacter(e.getPoint()); }
     @Override public void keyTyped(KeyEvent e) {}
+
+    private void updateHoveredCharacter(Point point) {
+        int nextHoveredCharacter = -1;
+        if (currentState == GameState.CHAR_SELECT) {
+            for (int i = 0; i < charButtons.length; i++) {
+                if (charButtons[i].contains(point)) {
+                    nextHoveredCharacter = i;
+                    break;
+                }
+            }
+        }
+        if (hoveredCharacter != nextHoveredCharacter) {
+            hoveredCharacter = nextHoveredCharacter;
+            repaint();
+        }
+    }
 
     // --- RENDERING ---
     @Override
@@ -324,17 +357,61 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
     private void drawCharSelect(Graphics2D g) {
         g.setColor(Color.WHITE); g.setFont(new Font("Arial", Font.BOLD, 40)); centerText(g, "CHOOSE YOUR HERO", 100);
         for(int i = 0; i < 4; i++) {
-            Rectangle btn = charButtons[i];
+            Rectangle bounds = charButtons[i];
+            int cardWidth = (int) Math.round(bounds.width * characterCardScale[i]);
+            int cardHeight = (int) Math.round(bounds.height * characterCardScale[i]);
+            Rectangle btn = new Rectangle(bounds.x - (cardWidth - bounds.width) / 2,
+                    bounds.y - (cardHeight - bounds.height) / 2, cardWidth, cardHeight);
             Character character = CharacterFactory.create(i + 1);
-            g.setColor(new Color(30, 30, 30)); g.fill(btn); g.setColor(Color.WHITE); g.setStroke(new BasicStroke(2)); g.draw(btn);
-            if (character instanceof Runner && ((Runner) character).getSprite() != null) {
-                drawSprite(g, ((Runner) character).getSprite(), btn.x + 50, btn.y + 20, 50, 85, 1, 0);
+            boolean hovered = i == hoveredCharacter;
+            g.setColor(hovered ? new Color(42, 48, 58) : new Color(30, 30, 30));
+            g.fill(btn);
+            g.setColor(hovered ? Color.CYAN : Color.WHITE);
+            g.setStroke(new BasicStroke(hovered ? 3 : 2));
+            g.draw(btn);
+            if (character instanceof Runner && ((Runner) character).getSprite(false) != null) {
+                drawSprite(g, ((Runner) character).getSprite(false), btn.x + 16, btn.y + 16,
+                        btn.width - 32, 196, 1, 0);
             } else {
-                g.setColor(character.getColor()); g.fillRect(btn.x + 60, btn.y + 30, 30, 50);
+                g.setColor(character.getColor());
+                g.fillRect(btn.x + (btn.width - 38) / 2, btn.y + 68, 38, 64);
             }
-            g.setColor(Color.WHITE); g.setFont(new Font("Arial", Font.BOLD, 18));
-            g.drawString(character.getName(), btn.x + 30, btn.y + 110);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 18));
+            FontMetrics nameMetrics = g.getFontMetrics();
+            g.drawString(character.getName(), btn.x + (btn.width - nameMetrics.stringWidth(character.getName())) / 2,
+                    btn.y + 232);
+            if (hovered) {
+                g.setColor(new Color(205, 215, 225));
+                g.setFont(new Font("Arial", Font.PLAIN, 12));
+                drawCenteredWrappedText(g, character.getDescription(), btn, btn.y + 255, 3);
+            }
         }
+    }
+
+    private void drawCenteredWrappedText(Graphics2D g, String text, Rectangle bounds, int baseline, int maxLines) {
+        FontMetrics metrics = g.getFontMetrics();
+        int maxWidth = bounds.width - 20;
+        StringBuilder line = new StringBuilder();
+        int lineNumber = 0;
+        for (String word : text.split(" ")) {
+            String candidate = line.length() == 0 ? word : line + " " + word;
+            if (metrics.stringWidth(candidate) > maxWidth && line.length() > 0) {
+                drawCenteredLine(g, metrics, line.toString(), bounds, baseline + lineNumber * 15);
+                lineNumber++;
+                line.setLength(0);
+                if (lineNumber >= maxLines) return;
+            }
+            if (line.length() > 0) line.append(' ');
+            line.append(word);
+        }
+        if (line.length() > 0 && lineNumber < maxLines) {
+            drawCenteredLine(g, metrics, line.toString(), bounds, baseline + lineNumber * 15);
+        }
+    }
+
+    private void drawCenteredLine(Graphics2D g, FontMetrics metrics, String text, Rectangle bounds, int baseline) {
+        g.drawString(text, bounds.x + (bounds.width - metrics.stringWidth(text)) / 2, baseline);
     }
 
     private void drawSprite(Graphics2D graphics, BufferedImage sprite, int x, int y,
@@ -342,9 +419,14 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         Graphics2D spriteGraphics = (Graphics2D) graphics.create();
         spriteGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                 RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        spriteGraphics.translate(x + (direction < 0 ? width : 0), y + verticalOffset);
+        double scale = Math.min(width / (double) sprite.getWidth(), height / (double) sprite.getHeight());
+        int drawWidth = (int) Math.round(sprite.getWidth() * scale);
+        int drawHeight = (int) Math.round(sprite.getHeight() * scale);
+        int drawX = x + (width - drawWidth) / 2;
+        int drawY = y + (height - drawHeight) / 2 + verticalOffset;
+        spriteGraphics.translate(drawX + (direction < 0 ? drawWidth : 0), drawY);
         if (direction < 0) spriteGraphics.scale(-1, 1);
-        spriteGraphics.drawImage(sprite, 0, 0, width, height, null);
+        spriteGraphics.drawImage(sprite, 0, 0, drawWidth, drawHeight, null);
         spriteGraphics.dispose();
     }
 
@@ -365,9 +447,9 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         g2d.translate(-camX, -camY);
 
         if(isGhostMode) { g2d.setColor(new Color(200, 100, 255, 100)); g2d.fillOval(playerX-5, playerY-5, playerWidth+10, playerHeight+10); }
-        if (selectedCharacter instanceof Runner && ((Runner) selectedCharacter).getSprite() != null) {
+        if (selectedCharacter instanceof Runner && ((Runner) selectedCharacter).getSprite(velY != 0) != null) {
             int bounce = velX != 0 && velY == 0 && runAnimationFrame ? 2 : 0;
-            drawSprite(g2d, ((Runner) selectedCharacter).getSprite(), playerX, playerY,
+            drawSprite(g2d, ((Runner) selectedCharacter).getSprite(velY != 0), playerX, playerY,
                     playerWidth, playerHeight, facingDirection, -bounce);
         } else {
             g2d.setColor(selectedCharacter.getColor());

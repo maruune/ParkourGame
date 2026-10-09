@@ -8,18 +8,20 @@ import javax.imageio.ImageIO;
 import parkour.characters.Character;
 
 public final class Runner extends Character {
-    private static final BufferedImage SPRITE = loadSprite();
+    private static final BufferedImage SPRITE = loadSprite("MarioStand.png");
+    private static final BufferedImage JUMP_SPRITE = loadSprite("MarioJump.png");
 
     public Runner() {
-        super(1, "Mario", Color.RED, 6, true, false, false);
+        super(1, "Mario", "Double jump to reach higher platforms and clear gaps.",
+                Color.RED, 6, true, false, false);
     }
 
-    public BufferedImage getSprite() {
-        return SPRITE;
+    public BufferedImage getSprite(boolean jumping) {
+        return jumping && JUMP_SPRITE != null ? JUMP_SPRITE : SPRITE;
     }
 
-    private static BufferedImage loadSprite() {
-        try (InputStream input = Runner.class.getResourceAsStream("Mario.png")) {
+    private static BufferedImage loadSprite(String resourceName) {
+        try (InputStream input = Runner.class.getResourceAsStream(resourceName)) {
             if (input == null) return null;
             BufferedImage image = ImageIO.read(input);
             if (image == null) return null;

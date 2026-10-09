@@ -51,7 +51,8 @@ src/main/
       level01/Level01.java
       ...
       level11/Level11.java
-  resources/parkour/characters/runner/Mario.png
+  resources/parkour/characters/runner/MarioStand.png
+  resources/parkour/characters/runner/MarioJump.png
 ```
 
 Each character and level has its own class and folder. Shared character attributes and procedural level generation live in their respective base classes.

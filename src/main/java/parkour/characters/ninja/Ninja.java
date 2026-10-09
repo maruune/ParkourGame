@@ -5,6 +5,7 @@ import parkour.characters.Character;
 
 public final class Ninja extends Character {
     public Ninja() {
-        super(2, "NINJA", Color.DARK_GRAY, 6, false, true, false);
+        super(2, "NINJA", "Dash quickly across wide gaps with Shift.",
+            Color.DARK_GRAY, 6, false, true, false);
     }
 }
