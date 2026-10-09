@@ -52,7 +52,7 @@ src/main/
       mario/Mario.java
       jett/Jett.java
       flash/Flash.java
-      ghost/Ghost.java
+      gojo/Gojo.java
     levels/
       Level.java
       LevelFactory.java
