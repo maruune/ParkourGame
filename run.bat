@@ -13,9 +13,6 @@ if not defined JAVAC (
 )
 
 if not exist build mkdir build
-if exist build\sources.txt del build\sources.txt
-for /r src\main\java %%F in (*.java) do echo "%%F" >> build\sources.txt
-
-"%JAVAC%" -source 8 -target 8 -d build @build\sources.txt
+"%JAVAC%" -source 8 -target 8 -sourcepath src\main\java -d build src\main\java\parkour\Main.java
 if errorlevel 1 exit /b 1
 java -cp build parkour.Main
