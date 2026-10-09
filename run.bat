@@ -16,5 +16,5 @@ if not defined JAVAC (
 if not exist build mkdir build
 "%JAVAC%" -source 8 -target 8 -sourcepath src\main\java -d build src\main\java\parkour\Main.java
 if errorlevel 1 exit /b 1
-if exist src\main\resources xcopy /E /I /Y src\main\resources build\ >nul
+if exist images xcopy /E /I /Y images build\images\ >nul
 java -cp build parkour.Main

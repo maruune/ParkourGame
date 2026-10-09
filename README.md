@@ -21,6 +21,8 @@ The script compiles the Java sources into `build/` and starts the game. To compi
 New-Item -ItemType Directory -Force build | Out-Null
 $sources = Get-ChildItem src/main/java -Recurse -Filter '*.java' | ForEach-Object FullName
 javac -source 8 -target 8 -d build $sources
+New-Item -ItemType Directory -Force build/images | Out-Null
+Copy-Item images/*.png build/images/
 java -cp build parkour.Main
 ```
 
@@ -34,6 +36,9 @@ java -cp build parkour.Main
 ## Project layout
 
 ```text
+images/
+  MarioStand.png
+  MarioJump.png
 src/main/
   java/parkour/
     Main.java
@@ -51,8 +56,6 @@ src/main/
       level01/Level01.java
       ...
       level11/Level11.java
-  resources/parkour/characters/runner/MarioStand.png
-  resources/parkour/characters/runner/MarioJump.png
 ```
 
 Each character and level has its own class and folder. Shared character attributes and procedural level generation live in their respective base classes.

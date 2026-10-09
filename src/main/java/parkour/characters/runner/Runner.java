@@ -21,7 +21,7 @@ public final class Runner extends Character {
     }
 
     private static BufferedImage loadSprite(String resourceName) {
-        try (InputStream input = Runner.class.getResourceAsStream(resourceName)) {
+        try (InputStream input = Runner.class.getResourceAsStream("/images/" + resourceName)) {
             if (input == null) return null;
             BufferedImage image = ImageIO.read(input);
             if (image == null) return null;
