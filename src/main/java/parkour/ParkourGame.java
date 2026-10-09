@@ -94,7 +94,7 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
 
         // Define UI Positions
         for(int i = 0; i < 4; i++) {
-            charButtons[i] = new Rectangle(50 + (i * 180), 150, 150, 300);
+            charButtons[i] = new Rectangle(50 + (i * 180), 150, 150, 320);
             characterCardScale[i] = 1.0;
         }
         int x = 50, y = 150;
@@ -403,11 +403,11 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
             g.setFont(new Font("Arial", Font.BOLD, 18));
             FontMetrics nameMetrics = g.getFontMetrics();
             g.drawString(character.getName(), btn.x + (btn.width - nameMetrics.stringWidth(character.getName())) / 2,
-                    btn.y + 232);
+                    btn.y + 250);
             if (hovered) {
                 g.setColor(new Color(205, 215, 225));
                 g.setFont(new Font("Arial", Font.PLAIN, 12));
-                drawCenteredWrappedText(g, character.getDescription(), btn, btn.y + 255, 3);
+                drawCenteredWrappedText(g, character.getDescription(), btn, btn.y + 273, 3);
             }
         }
     }
