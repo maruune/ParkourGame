@@ -2,16 +2,16 @@ package parkour.characters;
 
 import parkour.characters.flash.Flash;
 import parkour.characters.ghost.Ghost;
-import parkour.characters.ninja.Ninja;
-import parkour.characters.runner.Runner;
+import parkour.characters.jett.Jett;
+import parkour.characters.mario.Mario;
 
 public final class CharacterFactory {
     private CharacterFactory() { }
 
     public static Character create(int id) {
         switch (id) {
-            case 1: return new Runner();
-            case 2: return new Ninja();
+            case 1: return new Mario();
+            case 2: return new Jett();
             case 3: return new Flash();
             case 4: return new Ghost();
             default: throw new IllegalArgumentException("Unknown character: " + id);

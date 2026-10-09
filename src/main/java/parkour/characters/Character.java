@@ -1,6 +1,7 @@
 package parkour.characters;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 
 public abstract class Character {
     private final int id;
@@ -32,4 +33,5 @@ public abstract class Character {
     public boolean canDoubleJump() { return doubleJump; }
     public boolean canDash() { return dash; }
     public boolean canUseGhostMode() { return ghostMode; }
+    public BufferedImage getSprite(boolean jumping) { return null; }
 }

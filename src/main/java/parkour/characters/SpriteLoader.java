@@ -1,27 +1,15 @@
-package parkour.characters.runner;
+package parkour.characters;
 
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
-import parkour.characters.Character;
 
-public final class Runner extends Character {
-    private static final BufferedImage SPRITE = loadSprite("MarioStand.png");
-    private static final BufferedImage JUMP_SPRITE = loadSprite("MarioJump.png");
+public final class SpriteLoader {
+    private SpriteLoader() { }
 
-    public Runner() {
-        super(1, "Mario", "Double jump to reach higher platforms and clear gaps.",
-                Color.RED, 6, true, false, false);
-    }
-
-    public BufferedImage getSprite(boolean jumping) {
-        return jumping && JUMP_SPRITE != null ? JUMP_SPRITE : SPRITE;
-    }
-
-    private static BufferedImage loadSprite(String resourceName) {
-        try (InputStream input = Runner.class.getResourceAsStream("/images/" + resourceName)) {
+    public static BufferedImage load(String imageName) {
+        try (InputStream input = SpriteLoader.class.getResourceAsStream("/images/" + imageName)) {
             if (input == null) return null;
             BufferedImage image = ImageIO.read(input);
             if (image == null) return null;

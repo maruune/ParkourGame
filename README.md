@@ -39,6 +39,8 @@ java -cp build parkour.Main
 images/
   MarioStand.png
   MarioJump.png
+  JettStand.png
+  JettJump.png
 src/main/
   java/parkour/
     Main.java
@@ -46,8 +48,9 @@ src/main/
     characters/
       Character.java
       CharacterFactory.java
-      runner/Runner.java
-      ninja/Ninja.java
+      SpriteLoader.java
+      mario/Mario.java
+      jett/Jett.java
       flash/Flash.java
       ghost/Ghost.java
     levels/

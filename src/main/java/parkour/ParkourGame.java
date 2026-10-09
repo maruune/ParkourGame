@@ -2,7 +2,6 @@ package parkour;
 
 import parkour.characters.Character;
 import parkour.characters.CharacterFactory;
-import parkour.characters.runner.Runner;
 import parkour.levels.Level;
 import parkour.levels.LevelFactory;
 import javax.swing.*;
@@ -369,9 +368,9 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
             g.setColor(hovered ? Color.CYAN : Color.WHITE);
             g.setStroke(new BasicStroke(hovered ? 3 : 2));
             g.draw(btn);
-            if (character instanceof Runner && ((Runner) character).getSprite(false) != null) {
-                drawSprite(g, ((Runner) character).getSprite(false), btn.x + 16, btn.y + 16,
-                        btn.width - 32, 196, 1, 0);
+            BufferedImage sprite = character.getSprite(false);
+            if (sprite != null) {
+                drawSprite(g, sprite, btn.x + 16, btn.y + 16, btn.width - 32, 196, 1, 0);
             } else {
                 g.setColor(character.getColor());
                 g.fillRect(btn.x + (btn.width - 38) / 2, btn.y + 68, 38, 64);
@@ -447,9 +446,10 @@ public class ParkourGame extends JPanel implements Runnable, KeyListener, MouseL
         g2d.translate(-camX, -camY);
 
         if(isGhostMode) { g2d.setColor(new Color(200, 100, 255, 100)); g2d.fillOval(playerX-5, playerY-5, playerWidth+10, playerHeight+10); }
-        if (selectedCharacter instanceof Runner && ((Runner) selectedCharacter).getSprite(velY != 0) != null) {
+        BufferedImage sprite = selectedCharacter.getSprite(velY != 0);
+        if (sprite != null) {
             int bounce = velX != 0 && velY == 0 && runAnimationFrame ? 2 : 0;
-            drawSprite(g2d, ((Runner) selectedCharacter).getSprite(velY != 0), playerX, playerY,
+            drawSprite(g2d, sprite, playerX, playerY,
                     playerWidth, playerHeight, facingDirection, -bounce);
         } else {
             g2d.setColor(selectedCharacter.getColor());
